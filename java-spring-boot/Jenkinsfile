@@ -38,7 +38,7 @@ pipeline {
 
         stage('Docker Image') { // Build Docker Image
             steps {
-                sh 'cd java-spring-boot && docker build -t kevinjoehar/end-to-end-jenkins:${BUILD_NUMBER} .'
+                sh 'cd java-spring-boot && /usr/bin/docker build -t kevinjoehar/end-to-end-jenkins:${BUILD_NUMBER} .'
             }
         }
 
