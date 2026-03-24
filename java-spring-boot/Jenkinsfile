@@ -6,12 +6,6 @@ pipeline {
     }
     }
     stages {
-        stage('Checkout Code') { // Checkout code
-            steps {
-                git branch: 'main', url: 'https://github.com/Kevinjoeharris/end-to-end-jenkins-pipeline-infra-config.git'
-            }
-        }
-
         stage('Build') { // Build code
             steps {
                 sh 'cd spring-cicd-demo && mvn clean package -DskipTests'
