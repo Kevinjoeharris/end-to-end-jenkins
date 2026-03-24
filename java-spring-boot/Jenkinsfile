@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Build') { // Build code
             steps {
-                sh 'cd spring-cicd-demo && mvn clean package -DskipTests'
+                sh 'cd java-spring-boot && mvn clean package -DskipTests'
             }
         }
 
@@ -24,7 +24,7 @@ pipeline {
             }
             steps {
                 withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-                    sh 'cd spring-cicd-demo && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
+                    sh 'cd java-spring-boot && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
                 }
             }
         }
@@ -37,7 +37,7 @@ pipeline {
 
         stage('Docker Image') { // Build Docker Image
             steps {
-                sh 'docker build -t kevinjoehar/end-to-end-jenkins:${BUILD_NUMBER} .'
+                sh 'cd java-spring-boot && docker build -t kevinjoehar/end-to-end-jenkins:${BUILD_NUMBER} .'
             }
         }
 
