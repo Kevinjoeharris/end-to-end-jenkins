@@ -62,7 +62,7 @@ pipeline {
 
         stage('Update K8 Image Tag') { // The 'Deploy' stage
             environment {
-                GIT_REPO_NAME = "end-to-end-jenkins-pipeline-infra-config"
+                GIT_REPO_NAME = "end-to-end-jenkins"
                 GIT_USER_NAME = "Kevinjoeharris"
             }
             steps {
@@ -71,7 +71,7 @@ pipeline {
                         git config user.email "kevinjoeharris1@gmail.com"
                         git config user.name "Kevinjoeharris"
                         BUILD_NUMBER=${BUILD_NUMBER}
-                        sed -i "s|end-to-end-jenkins: end-to-end-jenkins:.*|image: nexus/end-to-end-jenkins:${BUILD_NUMBER}|" deployment.yaml'
+                        sed -i "s|end-to-end-jenkins:.*|end-to-end-jenkins:${BUILD_NUMBER}|g" end-to-end-jenkins/manifests/deployment.yaml
                         git commit -am "ci: bump image to ${BUILD_NUMBER}"
                         git push
                     '''
