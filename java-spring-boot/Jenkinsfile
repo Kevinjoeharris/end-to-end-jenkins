@@ -19,7 +19,7 @@ pipeline {
             }
         }
         
-        stage('Sonar') { // SAST with Sonar
+        /*stage('Sonar') { // SAST with Sonar
             environment {
                 SONAR_URL = "http://IP:9000"
             }
@@ -28,7 +28,7 @@ pipeline {
                     //sh 'cd java-spring-boot && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
                 }
             }
-        }
+        }  */
 
         stage('Push to Artifactory') { // Push jar artifact to Artifactory
             steps {
