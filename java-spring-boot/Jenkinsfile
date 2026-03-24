@@ -1,0 +1,91 @@
+pipeline {
+    agent {
+        docker {
+            image 'maven:3.9.6-eclipse-temurin-17'
+            args '--user root -v /var/run/docker.sock:/var/run/docker.sock' // mount Docker socket to access the host's Docker daemon
+    }
+    }
+    stages {
+        stage('Checkout Code') { // Checkout code
+            steps {
+                git branch: 'main', url: 'https://github.com/Kevinjoeharris/end-to-end-jenkins-pipeline-infra-config.git'
+            }
+        }
+
+        stage('Build') { // Build code
+            steps {
+                sh 'cd spring-cicd-demo && mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Unit test') { // Unit test
+            steps {
+                sh 'mvn test'
+            }
+        }
+        
+        stage('Sonar') { // SAST with Sonar
+            environment {
+                SONAR_URL = "http://IP:9000"
+            }
+            steps {
+                withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
+                    sh 'cd spring-cicd-demo && mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}'
+                }
+            }
+        }
+
+        stage('Push to Artifactory') { // Push jar artifact to Artifactory
+            steps {
+                sh 'echo "Push to nexus'
+            }
+        }
+
+        stage('Docker Image') { // Build Docker Image
+            steps {
+                sh 'docker build -t kevinjoehar/end-to-end-jenkins:${BUILD_NUMBER} .'
+            }
+        }
+
+        stage('Trivy') { // Image vulnerability test
+            steps {
+                sh 'echo "Trivy Scan"'
+            }
+        }
+
+        stage('Push to Registry') { // Push to Image to Hub
+            steps {
+                sh "echo \"$DOCKER_PASSWORD\" | docker login -u \"$DOCKER_USER\" --password-stdin"
+                sh 'docker push kevinjoehar/end-to-end-jenkins:${BUILD_NUMBER}'
+            }
+        }
+
+        stage('Update K8 Image Tag') { // The 'Deploy' stage
+            environment {
+                GIT_REPO_NAME = "end-to-end-jenkins-pipeline-infra-config"
+                GIT_USER_NAME = "Kevinjoeharris"
+            }
+            steps {
+                withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        git config user.email "kevinjoeharris1@gmail.com"
+                        git config user.name "Kevinjoeharris"
+                        BUILD_NUMBER=${BUILD_NUMBER}
+                        sed -i "s|end-to-end-jenkins: end-to-end-jenkins:.*|image: nexus/end-to-end-jenkins:${BUILD_NUMBER}|" deployment.yaml'
+                        git commit -am "ci: bump image to ${BUILD_NUMBER}"
+                        git push
+                    '''
+            }
+        }
+    }
+    
+    post { // Actions to run after the pipeline finishes
+        always { // Runs regardless of the pipeline outcome
+            echo 'Pipeline finished.'
+            junit 'target/surefire-reports/*.xml'
+        }
+        failure { // Runs only if the pipeline fails
+            echo 'Pipeline failed!'
+        }
+    }
+}
